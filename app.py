@@ -7,6 +7,11 @@ MQTT_BROKER = "93be88c856bc40329b96e8fba46ac044.s1.eu.hivemq.cloud"
 MQTT_USER = "kundan"
 MQTT_PASS = "Kundan@1985"
 
+if "mqtt_client" not in st.session_state:
+    # ... your existing connection code ...
+    st.session_state.mqtt_client.loop_start() # Ensure this line is present!
+
+
 st.set_page_config(page_title="Smart Plug", layout="centered")
 
 if "mqtt_client" not in st.session_state:
