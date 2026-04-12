@@ -51,3 +51,7 @@ with col2:
 st.markdown("---")
 # Auto-refresh the UI to show status changes
 st.button("🔄 Refresh Status") 
+    time.sleep(2)
+    st.rerun()
+    
+
