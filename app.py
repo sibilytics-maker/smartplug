@@ -13,7 +13,7 @@ if "device_status" not in st.session_state:
 
 # Callback when status is received from ESP32
 def on_message(client, userdata, msg):
-    if msg.topic == "smartplug/status":
+    if msg.topic == "smartplug/control":
         st.session_state.device_status = msg.payload.decode()
 
 # Initialize MQTT Client
@@ -23,7 +23,7 @@ if "mqtt_client" not in st.session_state:
     client.tls_set()
     client.on_message = on_message
     client.connect(MQTT_BROKER, 8883)
-    client.subscribe("smartplug/status")
+    client.subscribe("smartplug/control")
     client.loop_start()
     st.session_state.mqtt_client = client
 
