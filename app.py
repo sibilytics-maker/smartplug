@@ -40,7 +40,7 @@ col1, col2 = st.columns(2)
 # Select emoji based on status
 # Green circle for ON, Red circle for OFF
 on_emoji = "🟢" if st.session_state.device_status == "ON" else "⚪"
-off_emoji = "🔴" if st.session_state.device_status == "ON" else "⚪"
+off_emoji = "⚪" if st.session_state.device_status == "ON" else "🔴"
 
 with col1:
     # Button box remains standard, only the emoji inside changes
