@@ -7,25 +7,24 @@ MQTT_BROKER = "93be88c856bc40329b96e8fba46ac044.s1.eu.hivemq.cloud"
 MQTT_USER = "kundan"
 MQTT_PASS = "Kundan@1985"
 
-# Initialize session state for status
+# 1. Initialize session state
 if "device_status" not in st.session_state:
     st.session_state.device_status = "OFF"
 
-# Callback when status is received from ESP32
+# 2. Callback for incoming status from ESP32
 def on_message(client, userdata, msg):
-    # Only update if the message is ON or OFF
     new_status = msg.payload.decode()
     if new_status in ["ON", "OFF"]:
         st.session_state.device_status = new_status
 
-# Initialize MQTT Client
+# 3. MQTT Setup
 if "mqtt_client" not in st.session_state:
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
     client.username_pw_set(MQTT_USER, MQTT_PASS)
     client.tls_set()
     client.on_message = on_message
     client.connect(MQTT_BROKER, 8883)
-    client.subscribe("smartplug/status") # Listen to status from ESP32
+    client.subscribe("smartplug/status")
     client.loop_start()
     st.session_state.mqtt_client = client
 
@@ -34,24 +33,35 @@ st.set_page_config(page_title="Smart Plug", layout="centered")
 st.title("🔌 Smart Plug Control")
 st.markdown("---")
 
-# Display Live Status
+# 4. Professional Status Display
+# If ON, text is green. If OFF, text is red.
 status_color = "green" if st.session_state.device_status == "ON" else "red"
-st.subheader(f"Current Status: :{status_color}[{st.session_state.device_status}]")
+st.markdown(f"### Current Status: :{status_color}[{st.session_state.device_status}]")
 
-# Control Buttons
+# 5. Professional Buttons
 col1, col2 = st.columns(2)
+
 with col1:
     if st.button("🔴 TURN ON", use_container_width=True):
         st.session_state.mqtt_client.publish("smartplug/control", "ON")
-        st.toast("Command Sent: ON")
+        # Force local update so it turns green immediately
+        st.session_state.device_status = "ON" 
+        st.toast("Command Sent: ON ✅")
+        time.sleep(0.5)
+        st.rerun()
 
 with col2:
     if st.button("⚪ TURN OFF", use_container_width=True):
         st.session_state.mqtt_client.publish("smartplug/control", "OFF")
-        st.toast("Command Sent: OFF")
+        # Force local update so it turns red immediately
+        st.session_state.device_status = "OFF"
+        st.toast("Command Sent: OFF ⚪")
+        time.sleep(0.5)
+        st.rerun()
 
 st.markdown("---")
+st.caption("Auto-syncing with device every 2 seconds...")
 
-# Refresh the UI every 2 seconds to check for MQTT status updates
+# 6. Background sync
 time.sleep(2)
 st.rerun()
