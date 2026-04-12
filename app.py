@@ -1,6 +1,6 @@
 import streamlit as st
 import paho.mqtt.client as mqtt
-import json
+import time
 
 # --- CONFIG ---
 MQTT_BROKER = "93be88c856bc40329b96e8fba46ac044.s1.eu.hivemq.cloud"
@@ -9,12 +9,14 @@ MQTT_PASS = "Kundan@1985"
 
 # Initialize session state for status
 if "device_status" not in st.session_state:
-    st.session_state.device_status = "UNKNOWN"
+    st.session_state.device_status = "OFF"
 
 # Callback when status is received from ESP32
 def on_message(client, userdata, msg):
-    if msg.topic == "smartplug/control":
-        st.session_state.device_status = msg.payload.decode()
+    # Only update if the message is ON or OFF
+    new_status = msg.payload.decode()
+    if new_status in ["ON", "OFF"]:
+        st.session_state.device_status = new_status
 
 # Initialize MQTT Client
 if "mqtt_client" not in st.session_state:
@@ -23,7 +25,7 @@ if "mqtt_client" not in st.session_state:
     client.tls_set()
     client.on_message = on_message
     client.connect(MQTT_BROKER, 8883)
-    client.subscribe("smartplug/control")
+    client.subscribe("smartplug/status") # Listen to status from ESP32
     client.loop_start()
     st.session_state.mqtt_client = client
 
@@ -49,9 +51,7 @@ with col2:
         st.toast("Command Sent: OFF")
 
 st.markdown("---")
-# Auto-refresh the UI to show status changes
-st.button("🔄 Refresh Status") 
-    time.sleep(2)
-    st.rerun()
-    
 
+# Refresh the UI every 2 seconds to check for MQTT status updates
+time.sleep(2)
+st.rerun()
