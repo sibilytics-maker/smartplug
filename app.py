@@ -3,8 +3,8 @@ import paho.mqtt.client as mqtt
 import time
 
 # --- CONFIG ---
-MQTT_BROKER = "93be88c856bc40329b96e8fba46ac044.s1.eu.hivemq.cloud"
-MQTT_USER = "kundan"
+MQTT_BROKER = "2db5dd1aca904f70bfd13f559b360461.s1.eu.hivemq.cloud"
+MQTT_USER = "kundansmart"
 MQTT_PASS = "Kundan@1985"
 
 if "device_status" not in st.session_state:
