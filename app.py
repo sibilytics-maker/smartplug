@@ -3,7 +3,13 @@ import paho.mqtt.client as mqtt
 import uvicorn
 
 app = FastAPI()
+import os
+from sqlalchemy import create_engine
 
+# This pulls the URL from the Railway variables automatically
+db_url = os.getenv("DATABASE_URL")
+engine = create_engine(db_url)
+    
 # --- CONFIG ---
 MQTT_BROKER = "metro.proxy.rlwy.net"
 MQTT_PORT = 55113
