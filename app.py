@@ -4,6 +4,7 @@ import time
 
 # --- CONFIG ---
 MQTT_BROKER = "metro.proxy.rlwy.net" # Line 6
+client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 # client.tls_set()                  # Line 24 (Comment this out)
 client.connect(MQTT_BROKER, 55113)   # Line 29 (Change port to 55113)
 
