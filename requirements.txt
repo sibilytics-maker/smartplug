@@ -1,2 +1,6 @@
-   streamlit
-   paho-mqtt
+streamlit
+paho-mqtt
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
