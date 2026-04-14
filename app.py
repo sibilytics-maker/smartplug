@@ -1,8 +1,20 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware  # ADD THIS LINE
 import paho.mqtt.client as mqtt
 import uvicorn
+import os
 
 app = FastAPI()
+
+# ADD THESE LINES TO ALLOW YOUR APP TO CONNECT
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (POST, GET, etc.)
+    allow_headers=["*"],
+)
+
 import os
 from sqlalchemy import create_engine
 
