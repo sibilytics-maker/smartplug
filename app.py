@@ -3,11 +3,8 @@ import paho.mqtt.client as mqtt
 import time
 
 # --- CONFIG ---
-MQTT_BROKER = "metro.proxy.rlwy.net" # Line 6
-client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
-# client.tls_set()                  # Line 24 (Comment this out)
-client.connect(MQTT_BROKER, 55113)   # Line 29 (Change port to 55113)
-
+MQTT_BROKER = "metro.proxy.rlwy.net"
+MQTT_PORT = 55113
 MQTT_USER = "kundansmart"
 MQTT_PASS = "Kundan@1985"
 
@@ -20,11 +17,12 @@ def on_message(client, userdata, msg):
         st.session_state.device_status = new_status
 
 if "mqtt_client" not in st.session_state:
+    # Initialize the client inside the session state block
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
     client.username_pw_set(MQTT_USER, MQTT_PASS)
-    #client.tls_set()
+    # client.tls_set() # Commented out for Railway TCP Proxy
     client.on_message = on_message
-    client.connect(MQTT_BROKER, 55113)
+    client.connect(MQTT_BROKER, MQTT_PORT)
     client.subscribe("smartplug/status")
     client.loop_start()
     st.session_state.mqtt_client = client
@@ -42,12 +40,10 @@ st.markdown(f"### Current Status: :{status_color}[{st.session_state.device_statu
 col1, col2 = st.columns(2)
 
 # Select emoji based on status
-# Green circle for ON, Red circle for OFF
 on_emoji = "🟢" if st.session_state.device_status == "ON" else "⚪"
 off_emoji = "⚪" if st.session_state.device_status == "ON" else "🔴"
 
 with col1:
-    # Button box remains standard, only the emoji inside changes
     if st.button(f"{on_emoji} TURN ON", use_container_width=True):
         st.session_state.mqtt_client.publish("smartplug/control", "ON")
         st.session_state.device_status = "ON"
