@@ -1,67 +1,47 @@
-import streamlit as st
+from fastapi import FastAPI, HTTPException
 import paho.mqtt.client as mqtt
-import time
+import uvicorn
+
+app = FastAPI()
 
 # --- CONFIG ---
 MQTT_BROKER = "metro.proxy.rlwy.net"
 MQTT_PORT = 55113
-MQTT_USER = "kundansmart"
-MQTT_PASS = "Kundan@1985"
 
-if "device_status" not in st.session_state:
-    st.session_state.device_status = "OFF"
+# Initialize MQTT Client
+mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+# mqtt_client.username_pw_set("kundan", "Kundan@1985") # Uncomment if you set a password
 
-def on_message(client, userdata, msg):
-    new_status = msg.payload.decode()
-    if new_status in ["ON", "OFF"]:
-        st.session_state.device_status = new_status
+@app.on_event("startup")
+def startup_event():
+    mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
+    mqtt_client.loop_start()
 
-if "mqtt_client" not in st.session_state:
-    # Initialize the client inside the session state block
-    client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
-    client.username_pw_set(MQTT_USER, MQTT_PASS)
-    # client.tls_set() # Commented out for Railway TCP Proxy
-    client.on_message = on_message
-    client.connect(MQTT_BROKER, MQTT_PORT)
-    client.subscribe("smartplug/status")
-    client.loop_start()
-    st.session_state.mqtt_client = client
+# 1. Login Endpoint (Tapo-style)
+@app.post("/login")
+def login(data: dict):
+    # In a real app, check these against your PostgreSQL database
+    if data.get("username") == "kundan" and data.get("password") == "Kundan@1985":
+        return {"status": "success", "token": "user_session_abc_123"}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
-st.set_page_config(page_title="Smart Plug", layout="centered")
+# 2. Control Endpoint (What your mobile app calls)
+@app.post("/control")
+def control_device(data: dict):
+    device_id = data.get("device_id", "smartplug")
+    action = data.get("action") # "ON" or "OFF"
+    
+    if action not in ["ON", "OFF"]:
+        raise HTTPException(status_code=400, detail="Action must be ON or OFF")
+        
+    topic = f"{device_id}/control"
+    mqtt_client.publish(topic, action)
+    return {"status": "dispatched", "topic": topic, "command": action}
 
-st.title("🔌 Smart Plug Control")
-st.markdown("---")
+# 3. Health Check
+@app.get("/")
+def home():
+    return {"message": "Tapo-like API is running"}
 
-# 1. Status Display
-status_color = "green" if st.session_state.device_status == "ON" else "red"
-st.markdown(f"### Current Status: :{status_color}[{st.session_state.device_status}]")
-
-# 2. Dynamic Buttons
-col1, col2 = st.columns(2)
-
-# Select emoji based on status
-on_emoji = "🟢" if st.session_state.device_status == "ON" else "⚪"
-off_emoji = "⚪" if st.session_state.device_status == "ON" else "🔴"
-
-with col1:
-    if st.button(f"{on_emoji} TURN ON", use_container_width=True):
-        st.session_state.mqtt_client.publish("smartplug/control", "ON")
-        st.session_state.device_status = "ON"
-        st.toast("Command Sent: ON ✅")
-        time.sleep(0.5)
-        st.rerun()
-
-with col2:
-    if st.button(f"{off_emoji} TURN OFF", use_container_width=True):
-        st.session_state.mqtt_client.publish("smartplug/control", "OFF")
-        st.session_state.device_status = "OFF"
-        st.toast("Command Sent: OFF ⚪")
-        time.sleep(0.5)
-        st.rerun()
-
-st.markdown("---")
-st.caption("Auto-syncing with device every 2 seconds...")
-
-# 3. Background sync
-time.sleep(2)
-st.rerun()
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8080)
