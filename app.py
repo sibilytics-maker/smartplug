@@ -3,7 +3,10 @@ import paho.mqtt.client as mqtt
 import time
 
 # --- CONFIG ---
-MQTT_BROKER = "2db5dd1aca904f70bfd13f559b360461.s1.eu.hivemq.cloud"
+MQTT_BROKER = "metro.proxy.rlwy.net" # Line 6
+# client.tls_set()                  # Line 24 (Comment this out)
+client.connect(MQTT_BROKER, 55113)   # Line 29 (Change port to 55113)
+
 MQTT_USER = "kundansmart"
 MQTT_PASS = "Kundan@1985"
 
@@ -18,9 +21,9 @@ def on_message(client, userdata, msg):
 if "mqtt_client" not in st.session_state:
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
     client.username_pw_set(MQTT_USER, MQTT_PASS)
-    client.tls_set()
+    #client.tls_set()
     client.on_message = on_message
-    client.connect(MQTT_BROKER, 8883)
+    client.connect(MQTT_BROKER, 55113)
     client.subscribe("smartplug/status")
     client.loop_start()
     st.session_state.mqtt_client = client
