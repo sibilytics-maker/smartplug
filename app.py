@@ -12,21 +12,29 @@ MQTT_PORT = 55113
 
 # Initialize MQTT Client
 mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+# Add these two lines to ensure the app doesn't crash on connection blips
+mqtt_client.username_pw_set("kundansmart", "Kundan@1985") 
+mqtt_client.reconnect_delay_set(min_delay=1, max_delay=120)
 
-# Lifespan manager replaces the deprecated on_event startup
+# Lifespan manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Connect to MQTT
-    mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
-    mqtt_client.loop_start()
+    # Startup: Connect to MQTT with error handling to avoid Railway crash loop
+    try:
+        mqtt_client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
+        mqtt_client.loop_start()
+    except Exception as e:
+        print(f"MQTT Connection Error: {e}")
+    
     yield
+    
     # Shutdown: Disconnect
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 
 app = FastAPI(lifespan=lifespan)
 
-# Allow Chrome/Web apps to connect (Fixes the 405 error in your logs)
+# Allow Chrome/Web apps to connect
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,7 +46,8 @@ app.add_middleware(
 # Database Setup
 db_url = os.getenv("DATABASE_URL")
 if db_url:
-    engine = create_engine(db_url)
+    # Use a pool size to prevent the 8-toggle connection leak
+    engine = create_engine(db_url, pool_size=5, max_overflow=10)
 
 # 1. Login Endpoint
 @app.post("/login")
@@ -57,8 +66,13 @@ def control_device(data: dict):
         raise HTTPException(status_code=400, detail="Action must be ON or OFF")
         
     topic = f"{device_id}/control"
-    mqtt_client.publish(topic, action)
-    return {"status": "dispatched", "topic": topic, "command": action}
+    
+    # Check if connected before publishing to avoid crash
+    if mqtt_client.is_connected():
+        mqtt_client.publish(topic, action)
+        return {"status": "dispatched", "topic": topic, "command": action}
+    else:
+        raise HTTPException(status_code=503, detail="MQTT Broker not reachable")
 
 # 3. Health Check
 @app.get("/")
