@@ -62,8 +62,9 @@ def control_device(data: dict):
     device_id = data.get("device_id", "smartplug")
     action = data.get("action")
     
-    if action not in ["ON", "OFF"]:
-        raise HTTPException(status_code=400, detail="Action must be ON or OFF")
+    # ADDED RESET_WIFI TO THE ALLOWED ACTIONS LIST
+    if action not in ["ON", "OFF", "RESET_WIFI"]:
+        raise HTTPException(status_code=400, detail="Action must be ON, OFF, or RESET_WIFI")
         
     topic = f"{device_id}/control"
     
