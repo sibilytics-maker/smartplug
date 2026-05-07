@@ -7,8 +7,8 @@ import os
 from sqlalchemy import create_engine
 
 # --- CONFIG ---
-MQTT_BROKER = "metro.proxy.rlwy.net"
-MQTT_PORT = 55113
+MQTT_BROKER = "mosquitto"
+MQTT_PORT = 1883
 
 # Initialize MQTT Client
 mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
