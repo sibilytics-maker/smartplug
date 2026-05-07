@@ -15,14 +15,21 @@ mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
 #mqtt_client.username_pw_set("kundansmart", "Kundan@1985") 
 mqtt_client.reconnect_delay_set(min_delay=1, max_delay=120)
 
-# Lifespan manager
+import time
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        mqtt_client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
-        mqtt_client.loop_start()
-    except Exception as e:
-        print(f"MQTT Connection Error: {e}")
+    # Try connecting up to 5 times
+    for i in range(5):
+        try:
+            print(f"Attempting MQTT connection (Attempt {i+1}/5)...")
+            mqtt_client.connect(MQTT_BROKER, MQTT_PORT, keepalive=60)
+            mqtt_client.loop_start()
+            print("Successfully connected to MQTT Broker!")
+            break
+        except Exception as e:
+            print(f"MQTT Connection Error: {e}")
+            time.sleep(2) # Wait 2 seconds before retrying
     
     yield
     
