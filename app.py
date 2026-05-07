@@ -12,7 +12,7 @@ MQTT_PORT = 1883
 
 # Initialize MQTT Client
 mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
-mqtt_client.username_pw_set("kundansmart", "Kundan@1985") 
+#mqtt_client.username_pw_set("kundansmart", "Kundan@1985") 
 mqtt_client.reconnect_delay_set(min_delay=1, max_delay=120)
 
 # Lifespan manager
